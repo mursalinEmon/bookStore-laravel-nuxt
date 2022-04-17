@@ -7,6 +7,8 @@ use App\Models\Product;
 use GuzzleHttp\Handler\Proxy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 
@@ -92,12 +94,40 @@ class ProductController extends Controller
 
     }
 
-    public function backend(){
+    public function backend(Request $request){
 
-        return Cache::remember('products_backend', 86400, function () {
+        $page = $request->input('page', 1);
 
-            return Product::paginate();
+        /**@var Collection $products */
+        $products = Cache::remember('products_backend', 86400, fn () =>  Product::all());
 
-        });
+        if($search = $request->input('search')){
+            $products = $products->filter(
+                fn(Product $product) => Str::contains($product->title, $search) || Str::contains($product->description, $search)
+            );
+        }
+
+        if($sort =  $request->input('sort')){
+            if($sort === 'asc'){
+                $products = $products->sortBy([
+                    fn($a, $b) => $a['price'] <=> $b['price']
+                ]);
+            }elseif($sort === 'desc'){
+                $products = $products->sortBy([
+                    fn($a, $b) => $b['price'] <=> $a['price']
+                ]);
+            }
+        }
+
+        $total = $products->count();
+
+        return [
+            'data' => $products->forPage($page,9)->values(),
+            'meta' => [
+                'total' => $total,
+                'page' => $page,
+                'last_page' => ceil($total/9)
+            ]
+        ];
     }
 }
