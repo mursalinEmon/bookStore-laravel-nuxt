@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AmbassadorController;
 use App\Http\Controllers\Api\LinkController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,9 +52,12 @@ Route::namespace('App\Http\Controllers\Api')->prefix('admin')->group(function(){
 });
 
 
-Route::namespace('App\Http\Controllers\Api')->prefix('admin')->group(function(){
+Route::namespace('App\Http\Controllers\Api')->prefix('ambassador')->group(function(){
 
     common_routes('scope.ambassador');
+
+    Route::get('products/frontend', [ProductController::class, 'frontend']);
+    Route::get('products/backend', [ProductController::class, 'backend']);
 
 });
 // Route::get('/login', [App\Http\Controllers\Api\AuthController::class,'register'])->name('login');

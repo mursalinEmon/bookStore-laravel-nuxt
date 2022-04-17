@@ -36,6 +36,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read int|null $tokens_count
  * @method static \Illuminate\Database\Eloquent\Builder|User admins()
  * @method static \Illuminate\Database\Eloquent\Builder|User ambassadors()
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Order[] $orders
+ * @property-read int|null $orders_count
  */
 class User extends Authenticatable
 {
@@ -48,6 +50,11 @@ class User extends Authenticatable
 
     ];
 
+    public function orders(){
+
+        return $this->hasMany(Order::class);
+    }
+
     public function scopeAmbassadors($query){
         return $query->whereIsAdmin(0);
 
@@ -57,5 +64,8 @@ class User extends Authenticatable
 
     }
 
+    public function getRevenueAttiribute(){
+        return $this->orders->sum(fn(Order $order) => $order->ambassador_revenue);
+    }
 
 }

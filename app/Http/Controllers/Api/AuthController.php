@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdateInfoRequest;
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Resources\UserResource;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\User;
 use Hash;
@@ -28,6 +29,7 @@ class AuthController extends Controller
     }
 
     public function login(Request $request){
+        // dd('hit');
         if(!Auth::attempt($request->only('email', 'password'))){
             return response([
                 'error' => 'Invalid Credentials'
@@ -36,7 +38,17 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        $jwt = $user->createToken('token', ['admin'])->plainTextToken;
+        $adminLogin = $request->path() === 'api/admin/register';
+
+        if($adminLogin && !$user->is_admin){
+            return response([
+                'error' => 'Access Denied'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $scope = $adminLogin ? 1 : 0;
+
+        $jwt = $user->createToken('token', [$scope])->plainTextToken;
 
         $cookie = cookie('jwt', $jwt, 60*24);
         return response([
@@ -45,8 +57,10 @@ class AuthController extends Controller
     }
 
     public function user(Request $request){
-        // dd($request);
-        return $request->user();
+
+        $user = $request->user();
+
+        return new UserResource($user);
     }
 
     public function logout(){

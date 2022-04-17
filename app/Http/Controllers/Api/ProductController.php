@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use GuzzleHttp\Handler\Proxy;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 
@@ -72,5 +74,30 @@ class ProductController extends Controller
 
         return response(null, Response::HTTP_NO_CONTENT);
 
+    }
+
+    public function frontend()
+    {
+        if($products = Cache::get('products_fronend')){
+            return $products;
+        }
+
+        sleep(2);
+
+        $products = Product::all();
+
+        Cache::set('product_frontend', $products, 86400);
+
+        return $products;
+
+    }
+
+    public function backend(){
+
+        return Cache::remember('products_backend', 86400, function () {
+
+            return Product::paginate();
+
+        });
     }
 }
